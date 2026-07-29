@@ -1,9 +1,8 @@
 fastapi
 uvicorn
 numpy
-opencv-python
+opencv-python-headless
 scipy
 python-dotenv
 python-multipart
-pydantic
 tritonclient[grpc]
