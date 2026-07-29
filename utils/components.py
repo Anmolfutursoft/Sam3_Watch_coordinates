@@ -1,16 +1,16 @@
+
 from fastapi import UploadFile
 import cv2
-import io
 import numpy as np
 from scipy import ndimage
 
-from utils.sam3 import sam3
 
+# This function reads an uploaded image file and converts it to an RGB image represented as a NumPy array.
+# It first reads the image bytes from the uploaded file, decodes them into an image using OpenCV, 
+# and then converts the color space from BGR (used by OpenCV) to RGB (commonly used in image processing). 
+# If the image cannot be read, it raises a ValueError.
 
 def read_image(image: UploadFile) -> np.ndarray:
-    
-    ##Read an uploaded image and convert it to RGB Image.
-
     image_bytes = image.file.read()
     image_np = np.frombuffer(image_bytes, np.uint8)
     image = cv2.imdecode(image_np, cv2.IMREAD_COLOR)
@@ -20,13 +20,12 @@ def read_image(image: UploadFile) -> np.ndarray:
     return image
 
 
-def detect_masks(rgb_image):
-    return sam3.detect(
-        image=rgb_image,
-        prompt_list=["FULL WATCH", "STRAP"],
-        threshold=0.25,
-        mask_threshold=0.25,
-    )
+# This function takes a list of decoded masks and their corresponding scores, 
+# and returns the mask with the highest score from the first category (the watch mask).
+#step-1 : Convert the scores list to a NumPy array for easier manipulation.
+#step-2 : Find the index of the highest score in the watch scores using np.argmax
+#step-3 : Use the index of the highest score to select the corresponding mask from the decoded masks list.
+#step-4 : Convert the selected mask to a boolean array, where True
 
 
 def get_watch_mask(decoded_masks_list, scores_list):
@@ -56,6 +55,17 @@ def fill_mask_holes(mask: np.ndarray) -> np.ndarray:
 
     return filled_mask
 
+def oppening_mask(mask: np.ndarray, kernel_size: int = 8) -> np.ndarray:
+    kernel = np.ones((kernel_size, kernel_size), np.uint8)
+
+    mask = cv2.morphologyEx(
+        mask.astype(np.uint8),
+        cv2.MORPH_OPEN,
+        kernel,
+    )
+
+    return mask.astype(bool)
+
 
 def keep_largest_components(mask: np.ndarray, k: int = 1) -> np.ndarray:
     labels, num = ndimage.label(mask)
@@ -74,7 +84,7 @@ def keep_largest_components(mask: np.ndarray, k: int = 1) -> np.ndarray:
 
     return result
 
-def smooth_mask(mask: np.ndarray, kernel_size: int = 5) -> np.ndarray:
+def smooth_mask(mask: np.ndarray, kernel_size: int = 3) -> np.ndarray:
     kernel = np.ones((kernel_size, kernel_size), np.uint8)
 
     mask = cv2.morphologyEx(
@@ -100,3 +110,15 @@ def find_bbox(mask):
         int(xs.max()),
         int(ys.max()),
     ]
+    
+    
+
+import os
+
+def save_mask(mask, name):
+    os.makedirs("debug_masks", exist_ok=True)
+
+    cv2.imwrite(
+        f"debug_masks/{name}.png",
+        (mask.astype(np.uint8) * 255)
+    )

@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+numpy
+opencv-python
+scipy
+python-dotenv
+python-multipart
+pydantic
+tritonclient[grpc]

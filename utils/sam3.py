@@ -1,20 +1,27 @@
 import os
+from xmlrpc import client
+from dotenv import load_dotenv
 import numpy as np
 import base64
 import zlib
 from tritonclient import grpc as grpcclient
 import json
 
+load_dotenv()
 
-url = os.getenv("TRITON_SERVER_URL", "localhost:8000")
-print("Triton URL:", url)
+URL = os.getenv("URL")
+PORT = os.getenv("PORT")
+TRITON_URL = f"{URL}:{PORT}"
+
 
 class SAM3:
-    def __init__(self):
+    def __init__(self, url=TRITON_URL):
         self.client = grpcclient.InferenceServerClient(
             url=url,
             verbose=False,
         )
+        print(self.client.is_server_live())
+        print(self.client.is_server_ready())
 
     def detect(self, image, prompt_list=[None], threshold=0.25, mask_threshold=0.25):
         # img_array = cv2.imread(image_path)
@@ -69,36 +76,21 @@ class SAM3:
         # Step 2: Convert JSON string to Python dict
         json_str = sam3_result_bytes.decode("utf-8")
 
-        # Step 2: Convert JSON string to Python dict
+         # Step 2: Convert JSON string to Python dict
         sam3_result = json.loads(json_str)
-        # print("--- SAM3 Result ---")
-        # print(sam3_result)
-        # idx = sam3_result[0]['scores'].index(max(sam3_result[0]['scores']))
-        masks_dict_list = []
-        scores_list = []
-        boxes_list = []
-        for idx, result in enumerate(sam3_result):
-            masks_dict = result["masks"]
-            masks_dict_list.append(masks_dict)
-            scores = result["scores"]
-            scores_list.append(scores)
-            boxes = result.get("boxes", result.get("bboxes", []))
-            boxes_list.append(boxes)
-            print(f"Image {idx}: {len(boxes)} bbox(es)")
-            for b_idx, box in enumerate(boxes):
-                print(f"  box {b_idx}: {box}")
-        decoded_masks_list = []
-        for masks_dict in masks_dict_list:
-            decoded_masks = self.decode_mask(masks_dict)
-            decoded_masks_list.append(decoded_masks)
-
-        # mask = decoded_masks[idx]
-        # union_mask = np.any(decoded_masks, axis=0)
-
-        return decoded_masks_list, scores_list, boxes_list
+         # print("--- SAM3 Result ---")
+         # print(sam3_result)
+         # idx = sam3_result[0]['scores'].index(max(sam3_result[0]['score
+        return sam3_result
 
     @staticmethod
     def decode_mask(mask_dict):
+        # Decode a mask from the SAM3 output format to a NumPy array.
+        # STEP 1: Extract the shape and base64-encoded string from the mask_dict.
+        # STEP 2: Decode the base64 string to get the compressed binary data.
+        # STEP 3: Decompress the binary data using zlib to get the raw mask data.
+        # STEP 4: Convert the raw binary data to a NumPy array and reshape it according to the extracted shape.
+        
         shape = tuple(mask_dict["shape"])
         compressed = base64.b64decode(mask_dict["b64"])
         raw = zlib.decompress(compressed)
@@ -122,4 +114,8 @@ class SAM3:
         # +1 on the far edges so the box fully encloses the last pixel
         return [int(x1), int(y1), int(x2) + 1, int(y2) + 1]
     
-sam3 = SAM3()
+    
+    
+    
+    
+    

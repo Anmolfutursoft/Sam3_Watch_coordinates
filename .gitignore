@@ -1,0 +1,38 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+
+# Python version
+.python
+
+# Environment variables
+.env
+
+# Pytest
+.pytest_cache/
+
+# IPython
+.ipython/
+
+# Jupyter
+*.ipynb
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Output folders
+outputs/
+debug_masks/
+
+# Logs
+*.log
+
+# Accidental file
+.py
