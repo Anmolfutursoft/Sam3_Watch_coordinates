@@ -5,22 +5,28 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Install system libraries required by OpenCV and uv
-RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+# Install system packages required by OpenCV and curl
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install uv and add to PATH in same layer
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    export PATH="/root/.local/bin:$PATH"
+# Install uv
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Copy requirements first
-COPY requirements.txt .
+# Add uv to PATH
+ENV PATH="/root/.local/bin:$PATH"
 
-# Install Python dependencies using uv
-RUN /root/.local/bin/uv pip install --system --no-cache -r requirements.txt
+# Copy dependency files first
+COPY pyproject.toml uv.lock ./
 
-# Copy the application
-COPY . .
+# Install dependencies from uv.lock
+RUN uv sync --frozen --no-dev
 
-EXPOSE 8000
+# Copy application source
+COPY app.py .
+COPY routers ./routers
+COPY utils ./utils
 
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+EXPOSE 8502
+
+CMD ["uv", "run", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8502"]

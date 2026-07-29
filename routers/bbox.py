@@ -58,8 +58,6 @@ async def predict_bbox(image: UploadFile = File(...)):
             success=True,
             message=f"Image loaded successfully. Size: {rgb_image.shape[1]}x{rgb_image.shape[0]}",
             bbox=bbox,
-            boxes_list=boxes_list,
-            scores_list=scores_list
         )
         
     # Handle any exceptions that occur during the processing and return an error response.    
