@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  watch-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: watch_coordinate_detection_api
+
+    ports:
+      - "8502:8502"
+
+    env_file:
+      - .env
+
+    restart: unless-stopped
